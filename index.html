@@ -34,12 +34,96 @@
             position: relative;
         }
 
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1.5rem;
+            background: rgba(242, 244, 247, 0.95);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            gap: 1rem;
+            flex: 0 0 auto;
+        }
+
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .menu-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.02em;
+            border: none;
+            background: transparent;
+            color: #0f172a;
+            padding: 0.25rem 0.65rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .menu-button:hover,
+        .menu-button:focus-visible {
+            background: rgba(15, 23, 42, 0.08);
+        }
+
+        .menu-button[data-state="active"] {
+            color: #2563eb;
+        }
+
+        .app-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 0.6rem;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a, #2563eb);
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .format-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid rgba(15, 23, 42, 0.08);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            padding: 0.65rem 1.25rem;
+            overflow: auto;
+            flex: 0 0 auto;
+        }
+
+        .workspace {
+            flex: 1 1 auto;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr) 320px;
+            gap: 0;
+            padding: 0;
+            min-height: 0;
+            box-sizing: border-box;
+        }
+
+        .workspace > aside,
+        .workspace > section {
+            min-height: 0;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
         .editor-stage {
-            min-height: 640px;
-            border-radius: 1.5rem;
+            border-radius: 0;
             background: #fff;
-            box-shadow: 0 20px 45px rgba(15, 30, 64, 0.08);
-            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: none;
+            border-left: 1px solid rgba(15, 23, 42, 0.08);
+            border-right: 1px solid rgba(15, 23, 42, 0.08);
             display: flex;
             flex-direction: column;
         }
@@ -102,10 +186,11 @@
 
         .panel-card {
             background: #fff;
-            border-radius: 1.25rem;
+            border-radius: 0;
             padding: 1.5rem;
-            border: 1px solid rgba(15, 23, 42, 0.08);
-            box-shadow: 0 12px 30px rgba(15, 30, 64, 0.06);
+            border: none;
+            border-right: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: none;
             height: 100%;
             box-sizing: border-box;
             overflow: auto;
@@ -897,7 +982,6 @@
             control.addEventListener('click', () => handleAction(control.dataset.action));
         });
         if (selectors.themeToggle) {
-            selectors.themeToggle.addEventListener('click', toggleTheme);
             updateThemeToggleLabel();
         }
     }
@@ -1590,94 +1674,3 @@
 </script>
 </body>
 </html>
-        .app-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem 1.5rem;
-            background: rgba(242, 244, 247, 0.95);
-            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-            gap: 1rem;
-        }
-
-        .menu-bar {
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-        }
-
-        .menu-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            font-size: 0.85rem;
-            letter-spacing: 0.02em;
-            border: none;
-            background: transparent;
-            color: #0f172a;
-            padding: 0.25rem 0.65rem;
-            border-radius: 0.75rem;
-            cursor: pointer;
-            transition: background 0.2s ease, color 0.2s ease;
-        }
-
-        .menu-button:hover,
-        .menu-button:focus-visible {
-            background: rgba(15, 23, 42, 0.08);
-        }
-
-        .menu-button[data-state="active"] {
-            color: #2563eb;
-        }
-
-        .app-icon {
-            width: 26px;
-            height: 26px;
-            border-radius: 0.6rem;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #0f172a, #2563eb);
-            color: #fff;
-            cursor: pointer;
-        }
-
-        .format-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            background: rgba(255, 255, 255, 0.9);
-            border-top: 1px solid rgba(15, 23, 42, 0.08);
-            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-            padding: 0.65rem 1.25rem;
-            overflow: auto;
-        }
-
-        .workspace {
-            flex: 1 1 auto;
-            display: grid;
-            grid-template-columns: 280px minmax(0, 1fr) 320px;
-            gap: 1rem;
-            padding: 1rem 1.5rem 1.5rem;
-            min-height: 0;
-            box-sizing: border-box;
-        }
-
-        .workspace > aside,
-        .workspace > section {
-            min-height: 0;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .editor-stage {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .editor-surface {
-            flex: 1;
-            overflow: auto;
-        }
