@@ -1,6 +1,6 @@
-# Proton Canvas — HTML WYSIWYG Studio
+# VANPORT WYSIWYG — AI-Assisted HTML WYSIWYG Studio
 
-Proton Canvas is a single-page, desktop-first HTML WYSIWYG playground powered by vanilla JavaScript and TailwindCSS (via CDN). It focuses on quickly composing polished marketing docs or templates while remaining exportable as clean HTML.
+VANPORT WYSIWYG is a single-page, desktop-first playground powered by vanilla JavaScript and TailwindCSS (via CDN). It blends rich authoring tools with AI-friendly workflows so you can craft, reuse, and share polished HTML templates without leaving the browser.
 
 ## Key Features
 - **Modern editor canvas** – `contenteditable` stage with typography presets, responsive padding, and inline highlighting.
