@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proton Canvas · HTML WYSIWYG Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" referrerpolicy="no-referrer" />
+    <style>
+        :root {
+            color-scheme: light dark;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f2f4f7;
+            color: #0f172a;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .app-shell {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .editor-stage {
+            min-height: 640px;
+            border-radius: 1.5rem;
+            background: #fff;
+            box-shadow: 0 20px 45px rgba(15, 30, 64, 0.08);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-surface {
+            flex: 1;
+            padding: 2.5rem;
+            line-height: 1.7;
+            min-height: 460px;
+            outline: none;
+        }
+
+        .editor-surface h1,
+        .editor-surface h2,
+        .editor-surface h3,
+        .editor-surface h4 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-top: 1.6rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .editor-surface table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.25rem 0;
+        }
+
+        .editor-surface table td,
+        .editor-surface table th {
+            border: 1px solid #cbd5f5;
+            padding: 0.9rem 1rem;
+        }
+
+        .editor-surface figure {
+            margin: 1.5rem 0;
+        }
+
+        .editor-surface .flex-layout {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px dashed rgba(15, 23, 42, 0.2);
+            background: rgba(248, 250, 255, 0.8);
+        }
+
+        .editor-surface .flex-layout[data-direction="column"] {
+            flex-direction: column;
+        }
+
+        .editor-surface .flex-item {
+            flex: 1;
+            padding: 1.25rem;
+            border-radius: 0.9rem;
+            background: #fff;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            min-height: 140px;
+        }
+
+        .panel-card {
+            background: #fff;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 12px 30px rgba(15, 30, 64, 0.06);
+            height: 100%;
+            box-sizing: border-box;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sticky-panel {
+            height: 100%;
+            max-height: 100%;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .toolbar-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .toolbar-button:hover,
+        .toolbar-button:focus-visible {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .toolbar-button[data-active="true"] {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .floating-bubble {
+            position: fixed;
+            background: #0f172a;
+            color: #fff;
+            border-radius: 999px;
+            padding: 0.35rem 0.5rem;
+            display: none;
+            align-items: center;
+            gap: 0.15rem;
+            box-shadow: 0 15px 35px rgba(15, 15, 55, 0.35);
+            z-index: 40;
+        }
+
+        .floating-bubble button {
+            background: transparent;
+            border: 0;
+            color: inherit;
+            padding: 0.4rem;
+            border-radius: 999px;
+            width: 32px;
+            height: 32px;
+        }
+
+        .floating-bubble button:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .editor-highlight {
+            outline: 2px solid rgba(59, 130, 246, 0.65);
+            outline-offset: 2px;
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .dialog-overlay[data-open="true"] {
+            display: flex;
+        }
+
+        .dialog-panel {
+            background: #fff;
+            border-radius: 1.25rem;
+            width: min(900px, 90vw);
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dialog-panel textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            padding: 1.5rem;
+            font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+            font-size: 0.95rem;
+            flex: 1;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: #0f172a;
+            color: #fff;
+            padding: 0.85rem 1.25rem;
+            border-radius: 0.9rem;
+            box-shadow: 0 20px 35px rgba(15, 15, 15, 0.25);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 40;
+            pointer-events: none;
+        }
+
+        .toast[data-visible="true"] {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast[data-intent="error"] {
+            background: #ef4444;
+        }
+
+        .toast[data-intent="info"] {
+            background: #0f172a;
+        }
+
+        [data-preview][data-active="true"],
+        [data-preview-device][data-active="true"] {
+            background: #0f172a;
+            color: #fff;
+            border-color: #0f172a;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body:not([data-theme="light"]) {
+                background: #020617;
+                color: #e2e8f0;
+            }
+
+            body:not([data-theme="light"]) .editor-stage,
+            body:not([data-theme="light"]) .panel-card {
+                background: #0f172a;
+                border-color: rgba(148, 163, 184, 0.35);
+                box-shadow: 0 18px 35px rgba(2, 6, 23, 0.65);
+            }
+
+            body:not([data-theme="light"]) .editor-surface {
+                color: #e2e8f0;
+            }
+
+            body:not([data-theme="light"]) .editor-surface table td,
+            body:not([data-theme="light"]) .editor-surface table th {
+                border-color: rgba(148, 163, 184, 0.6);
+            }
+
+            body:not([data-theme="light"]) .editor-surface .flex-item {
+                background: #1e293b;
+                border-color: rgba(148, 163, 184, 0.5);
+            }
+
+            body:not([data-theme="light"]) .toolbar-button {
+                color: #e2e8f0;
+                border-color: rgba(148, 163, 184, 0.4);
+                background: rgba(15, 23, 42, 0.65);
+            }
+
+            body:not([data-theme="light"]) .toolbar-button:hover,
+            body:not([data-theme="light"]) .toolbar-button:focus-visible {
+                background: rgba(59, 130, 246, 0.2);
+                border-color: rgba(59, 130, 246, 0.5);
+            }
+
+            body:not([data-theme="light"]) .floating-bubble {
+                background: #1f2937;
+            }
+
+            body:not([data-theme="light"]) .floating-bubble button:hover {
+                background: rgba(248, 250, 255, 0.18);
+            }
+
+            body:not([data-theme="light"]) .dialog-panel textarea {
+                background: #020617;
+                color: #f8fafc;
+            }
+
+            body:not([data-theme="light"]) .toast[data-intent="info"] {
+                background: #1e293b;
+            }
+
+            body:not([data-theme="light"]) [data-preview][data-active="true"],
+            body:not([data-theme="light"]) [data-preview-device][data-active="true"] {
+                background: #2563eb;
+                border-color: #2563eb;
+            }
+        }
+
+        body[data-theme="dark"] {
+            background: #020617;
+            color: #e2e8f0;
+        }
+
+        body[data-theme="dark"] .editor-stage,
+        body[data-theme="dark"] .panel-card {
+            background: #0f172a;
+            border-color: rgba(148, 163, 184, 0.35);
+            box-shadow: 0 18px 35px rgba(2, 6, 23, 0.65);
+        }
+
+        body[data-theme="dark"] .editor-surface {
+            color: #e2e8f0;
+        }
+
+        body[data-theme="dark"] .editor-surface table td,
+        body[data-theme="dark"] .editor-surface table th {
+            border-color: rgba(148, 163, 184, 0.6);
+        }
+
+        body[data-theme="dark"] .editor-surface .flex-item {
+            background: #1e293b;
+            border-color: rgba(148, 163, 184, 0.5);
+        }
+
+        body[data-theme="dark"] .toolbar-button {
+            color: #e2e8f0;
+            border-color: rgba(148, 163, 184, 0.4);
+            background: rgba(15, 23, 42, 0.65);
+        }
+
+        body[data-theme="dark"] .toolbar-button:hover,
+        body[data-theme="dark"] .toolbar-button:focus-visible {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        body[data-theme="dark"] .floating-bubble {
+            background: #1f2937;
+        }
+
+        body[data-theme="dark"] .floating-bubble button:hover {
+            background: rgba(248, 250, 255, 0.18);
+        }
+
+        body[data-theme="dark"] .app-header {
+            background: rgba(2, 6, 23, 0.95);
+            border-bottom-color: rgba(148, 163, 184, 0.3);
+        }
+
+        body[data-theme="dark"] .menu-button {
+            color: #e2e8f0;
+        }
+
+        body[data-theme="dark"] .menu-button:hover,
+        body[data-theme="dark"] .menu-button:focus-visible {
+            background: rgba(148, 163, 184, 0.15);
+        }
+
+        body[data-theme="dark"] .format-toolbar {
+            background: rgba(15, 23, 42, 0.85);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        body[data-theme="dark"] .dialog-panel textarea {
+            background: #020617;
+            color: #f8fafc;
+        }
+
+        body[data-theme="dark"] .toast[data-intent="info"] {
+            background: #1e293b;
+        }
+
+        body[data-theme="dark"] [data-preview][data-active="true"],
+        body[data-theme="dark"] [data-preview-device][data-active="true"] {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .preview-frame-wrapper {
+            margin: 0 auto;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 1.25rem;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            transition: width 0.3s ease;
+            width: min(1100px, 90vw);
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 640px;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            border-radius: 1rem;
+            background: #fff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body:not([data-theme="light"]) .preview-frame-wrapper {
+                background: #020617;
+                border-color: rgba(148, 163, 184, 0.4);
+            }
+
+            body:not([data-theme="light"]) .preview-frame {
+                border-color: rgba(148, 163, 184, 0.45);
+            }
+        }
+
+        body[data-theme="dark"] .preview-frame-wrapper {
+            background: #020617;
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        body[data-theme="dark"] .preview-frame {
+            border-color: rgba(148, 163, 184, 0.45);
+        }
+
+        .preview-overlay {
+            align-items: stretch;
+            justify-content: stretch;
+        }
+
+        .preview-overlay .dialog-panel {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 100vh;
+            border-radius: 0;
+        }
+
+        .preview-body {
+            flex: 1;
+            display: flex;
+            padding: 1rem 2rem 2rem;
+            height: 100%;
+        }
+
+        .preview-overlay .preview-frame-wrapper {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+        }
+
+        .preview-overlay .preview-frame {
+            height: 100% !important;
+        }
+
+        @media (max-width: 1024px) {
+            .workspace {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .workspace > aside,
+            .workspace > section {
+                height: auto;
+                overflow: visible;
+            }
+
+            .editor-stage {
+                border-radius: 1rem;
+            }
+
+            .editor-surface {
+                padding: 1.5rem;
+                min-height: 380px;
+            }
+
+            .panel-card {
+                padding: 1.25rem;
+            }
+
+            .sticky-panel {
+                position: static;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <header class="app-header">
+        <div class="menu-bar">
+            <button class="app-icon" data-open-dialog="about" title="About Proton Canvas">
+                <i class="fa-solid fa-vector-square"></i>
+            </button>
+            <button class="menu-button" data-action="copy-html">Copy</button>
+            <button class="menu-button" data-open-dialog="share">Share</button>
+            <button class="menu-button" data-open-dialog="preview">Preview</button>
+            <button class="menu-button" data-open-dialog="code">Code</button>
+            <button class="menu-button" data-action="toggle-theme"><i class="fa-solid fa-circle-half-stroke"></i> <span data-theme-label>Theme</span></button>
+        </div>
+    </header>
+    <div class="format-toolbar" id="primary-toolbar">
+        <button class="toolbar-button" data-command="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
+        <button class="toolbar-button" data-command="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
+        <button class="toolbar-button" data-command="underline" title="Underline"><i class="fa-solid fa-underline"></i></button>
+        <button class="toolbar-button" data-command="strikeThrough" title="Strike"><i class="fa-solid fa-strikethrough"></i></button>
+        <div class="w-px h-8 bg-slate-200 mx-2"></div>
+        <select class="rounded-full border border-slate-200 px-3 text-sm" data-command="formatBlock">
+            <option value="P">Paragraph</option>
+            <option value="H1">Heading 1</option>
+            <option value="H2">Heading 2</option>
+            <option value="H3">Heading 3</option>
+            <option value="BLOCKQUOTE">Quote</option>
+        </select>
+        <div class="w-px h-8 bg-slate-200 mx-2"></div>
+        <button class="toolbar-button" data-command="justifyLeft" title="Align Left"><i class="fa-solid fa-align-left"></i></button>
+        <button class="toolbar-button" data-command="justifyCenter" title="Align Center"><i class="fa-solid fa-align-center"></i></button>
+        <button class="toolbar-button" data-command="justifyRight" title="Align Right"><i class="fa-solid fa-align-right"></i></button>
+        <button class="toolbar-button" data-command="insertUnorderedList" title="Bullet"><i class="fa-solid fa-list-ul"></i></button>
+        <button class="toolbar-button" data-command="insertOrderedList" title="Numbered"><i class="fa-solid fa-list-ol"></i></button>
+        <div class="w-px h-8 bg-slate-200 mx-2"></div>
+        <label class="flex items-center gap-2 text-sm text-slate-500">Text
+            <input type="color" value="#111827" data-command="foreColor" class="h-8 w-8 rounded-full border border-slate-200">
+        </label>
+        <label class="flex items-center gap-2 text-sm text-slate-500">Highlight
+            <input type="color" value="#fef08a" data-command="hiliteColor" class="h-8 w-8 rounded-full border border-slate-200">
+        </label>
+        <div class="w-px h-8 bg-slate-200 mx-2"></div>
+        <button class="toolbar-button" data-action="create-link" title="Link"><i class="fa-solid fa-link"></i></button>
+        <button class="toolbar-button" data-action="clear-format" title="Clear formatting"><i class="fa-solid fa-eraser"></i></button>
+        <button class="toolbar-button" data-action="copy-format" title="Copy format"><i class="fa-solid fa-paintbrush"></i></button>
+        <button class="toolbar-button" data-action="paste-format" title="Paste format"><i class="fa-solid fa-brush"></i></button>
+        <button class="toolbar-button" data-action="insert-image" title="Upload image"><i class="fa-solid fa-image"></i></button>
+        <button class="toolbar-button" data-command="undo" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="toolbar-button" data-command="redo" title="Redo"><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+
+    <div class="workspace">
+        <aside class="panel-card sticky-panel space-y-6" aria-label="layout tools">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="font-semibold text-slate-900">Layout Blueprints</h2>
+                    <span class="text-xs text-slate-400">Responsive</span>
+                </div>
+                <div class="grid gap-2">
+                    <button class="toolbar-button justify-between border border-slate-200" data-layout="single">
+                        <span class="font-medium">Single Column</span>
+                        <span class="text-xs text-slate-400">Article</span>
+                    </button>
+                    <button class="toolbar-button justify-between border border-slate-200" data-layout="two">
+                        <span class="font-medium">Two Column</span>
+                        <span class="text-xs text-slate-400">50 / 50</span>
+                    </button>
+                    <button class="toolbar-button justify-between border border-slate-200" data-layout="three">
+                        <span class="font-medium">Three Column</span>
+                        <span class="text-xs text-slate-400">Cards</span>
+                    </button>
+                    <button class="toolbar-button justify-between border border-slate-200" data-layout="hero">
+                        <span class="font-medium">Hero Banner</span>
+                        <span class="text-xs text-slate-400">Flex</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <h2 class="font-semibold text-slate-900">Table Studio</h2>
+                    <p class="text-sm text-slate-500">Generate responsive tables, merge cells, and resize rows/columns.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="text-xs text-slate-400 uppercase">Rows
+                        <input id="table-rows" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" value="3" min="1" max="12">
+                    </label>
+                    <label class="text-xs text-slate-400 uppercase">Columns
+                        <input id="table-cols" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" value="3" min="1" max="12">
+                    </label>
+                </div>
+                <button class="w-full py-2 rounded-full bg-blue-600 text-white font-semibold" data-action="insert-table">Insert Table</button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="text-sm rounded-full border border-slate-200 py-2" data-action="row-above">Row ↑</button>
+                    <button class="text-sm rounded-full border border-slate-200 py-2" data-action="row-below">Row ↓</button>
+                    <button class="text-sm rounded-full border border-slate-200 py-2" data-action="col-left">Col ←</button>
+                    <button class="text-sm rounded-full border border-slate-200 py-2" data-action="col-right">Col →</button>
+                    <button class="text-sm rounded-full border border-slate-200 py-2" data-action="merge-right">Merge →</button>
+                    <button class="text-sm rounded-full border border-slate-200 py-2" data-action="split-cell">Split Cell</button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <h2 class="font-semibold text-slate-900">Flex Controls</h2>
+                    <p class="text-sm text-slate-500">Create layout grids with flex properties.</p>
+                </div>
+                <label class="text-xs text-slate-400 uppercase">Number of columns
+                    <input id="flex-columns" type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" min="1" max="4" value="2">
+                </label>
+                <button class="w-full py-2 rounded-full border border-slate-200" data-action="insert-flex">Insert Flex Layout</button>
+                <div class="flex gap-2 text-sm text-slate-500">
+                    <button class="flex-1 py-2 rounded-full border border-slate-200" data-preview="desktop">Desktop</button>
+                    <button class="flex-1 py-2 rounded-full border border-slate-200" data-preview="tablet">Tablet</button>
+                    <button class="flex-1 py-2 rounded-full border border-slate-200" data-preview="mobile">Mobile</button>
+                </div>
+            </div>
+        </aside>
+
+        <section class="editor-stage">
+            <div id="editor" class="editor-surface" contenteditable="true" spellcheck="false">
+                <h2>Design smarter documents</h2>
+                <p class="text-lg">Create responsive layouts, tables, and branded sections in a live playground. Click anywhere to reveal contextual controls.</p>
+
+                <div class="flex-layout mt-10" data-flex-layout data-direction="row" data-justify="space-between" data-align="stretch">
+                    <div class="flex-item">
+                        <h3>Visual blocks</h3>
+                        <p>Combine columns, tables, and flex blueprints to orchestrate complex UI patterns with a single click.</p>
+                    </div>
+                    <div class="flex-item">
+                        <h3>Responsive controls</h3>
+                        <p>Switch preview modes (desktop, tablet, mobile) to validate column behavior and stack order instantly.</p>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Capability</th>
+                        <th>Details</th>
+                        <th>Shortcut</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>Flex Inspector</td>
+                        <td>Fine tune direction, justification, wrapping, and gaps for each layout wrapper.</td>
+                        <td>⌘ + Shift + L</td>
+                    </tr>
+                    <tr>
+                        <td>Table Studio</td>
+                        <td>Merge, split, and rescale columns without losing data.</td>
+                        <td>⌘ + Shift + T</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <aside class="panel-card sticky-panel space-y-6" aria-label="inspector">
+            <div>
+                <h2 class="font-semibold text-slate-900">Inspector</h2>
+                <p class="text-sm text-slate-500">Select elements to edit semantic and layout properties.</p>
+                <div class="mt-4 bg-slate-50 p-4 rounded-xl" id="inspector-selection">
+                    <p class="text-xs uppercase text-slate-500">Active Node</p>
+                    <p class="text-lg font-semibold" data-selection-label>None</p>
+                </div>
+            </div>
+
+            <div id="table-inspector" class="space-y-3 hidden">
+                <h3 class="font-semibold text-slate-900">Table Properties</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="text-xs text-slate-500">Cell Width
+                        <input type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" data-table-width>
+                    </label>
+                    <label class="text-xs text-slate-500">Cell Height
+                        <input type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" data-table-height>
+                    </label>
+                    <label class="text-xs text-slate-500">Padding
+                        <input type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" data-table-padding>
+                    </label>
+                    <label class="text-xs text-slate-500">Background
+                        <input type="color" class="mt-1 w-full rounded-lg border border-slate-200 h-10" data-table-bg>
+                    </label>
+                </div>
+            </div>
+
+            <div id="flex-inspector" class="space-y-3 hidden">
+                <h3 class="font-semibold text-slate-900">Flex Properties</h3>
+                <label class="text-xs text-slate-500">Direction
+                    <select class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" data-flex-direction>
+                        <option value="row">Row</option>
+                        <option value="column">Column</option>
+                    </select>
+                </label>
+                <label class="text-xs text-slate-500">Justify
+                    <select class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" data-flex-justify>
+                        <option value="flex-start">Start</option>
+                        <option value="center">Center</option>
+                        <option value="space-between">Space Between</option>
+                        <option value="space-around">Space Around</option>
+                        <option value="space-evenly">Space Evenly</option>
+                    </select>
+                </label>
+                <label class="text-xs text-slate-500">Align
+                    <select class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" data-flex-align>
+                        <option value="stretch">Stretch</option>
+                        <option value="flex-start">Start</option>
+                        <option value="center">Center</option>
+                        <option value="flex-end">End</option>
+                    </select>
+                </label>
+                <label class="text-xs text-slate-500">Wrap
+                    <select class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" data-flex-wrap>
+                        <option value="wrap">Wrap</option>
+                        <option value="nowrap">No Wrap</option>
+                    </select>
+                </label>
+                <label class="text-xs text-slate-500">Gap (px)
+                    <input type="number" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5" data-flex-gap>
+                </label>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold text-slate-900">Templates</h3>
+                <input type="text" id="template-name" placeholder="Template name" class="w-full rounded-lg border border-slate-200 px-3 py-1.5">
+                <button class="w-full py-2 rounded-full bg-slate-900 text-white" data-action="save-template">Save Template</button>
+                <select id="template-list" class="w-full rounded-lg border border-slate-200 px-3 py-2"></select>
+                <button class="w-full py-2 rounded-full border border-slate-200" data-action="load-template">Load Template</button>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold text-slate-900">Export & Share</h3>
+                <button class="w-full py-2 rounded-full border border-slate-200" data-action="export-json">Export JSON</button>
+                <button class="w-full py-2 rounded-full border border-slate-200" data-open-dialog="share">Share Options</button>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<div class="floating-bubble" id="floating-bubble" role="toolbar">
+    <button data-command="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
+    <button data-command="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
+    <button data-command="underline" title="Underline"><i class="fa-solid fa-underline"></i></button>
+    <button data-action="create-link" title="Link"><i class="fa-solid fa-link"></i></button>
+    <button data-command="insertUnorderedList" title="Bullet"><i class="fa-solid fa-list-ul"></i></button>
+</div>
+
+<div class="dialog-overlay" id="code-dialog" role="dialog" aria-modal="true">
+    <div class="dialog-panel">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+                <p class="text-xs uppercase text-slate-400">Export</p>
+                <h3 class="text-xl font-semibold text-slate-900">HTML Code</h3>
+            </div>
+            <div class="flex gap-2">
+                <button class="px-4 py-2 rounded-full border border-slate-200" data-action="copy-code">Copy</button>
+                <button class="px-4 py-2 rounded-full bg-slate-900 text-white" data-action="apply-code">Apply</button>
+                <button class="px-4 py-2 rounded-full border border-slate-200" data-close-dialog>Close</button>
+            </div>
+        </div>
+        <textarea id="code-editor"></textarea>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="share-dialog" role="dialog" aria-modal="true">
+    <div class="dialog-panel" style="max-width: 520px;">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+                <p class="text-xs uppercase text-slate-400">Share</p>
+                <h3 class="text-xl font-semibold text-slate-900">Whatsapp & Email</h3>
+            </div>
+            <button class="px-4 py-2 rounded-full border border-slate-200" data-close-dialog>Close</button>
+        </div>
+        <div class="p-6 space-y-4">
+            <button class="w-full py-3 rounded-2xl bg-green-500 text-white font-semibold flex items-center justify-center gap-3" data-action="share-whatsapp">
+                <i class="fa-brands fa-whatsapp"></i>
+                Share via WhatsApp
+            </button>
+            <button class="w-full py-3 rounded-2xl bg-blue-600 text-white font-semibold flex items-center justify-center gap-3" data-action="share-email">
+                <i class="fa-solid fa-envelope"></i>
+                Share via Email
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="about-dialog" role="dialog" aria-modal="true">
+    <div class="dialog-panel" style="max-width: 480px;">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+                <p class="text-xs uppercase text-slate-400 tracking-[0.35em]">Vanport</p>
+                <h3 class="text-xl font-semibold text-slate-900">VANPORT WYSIWYG</h3>
+            </div>
+            <button class="px-4 py-2 rounded-full border border-slate-200 text-sm" data-close-dialog>Close</button>
+        </div>
+        <div class="p-6 space-y-4 text-slate-600">
+            <p class="text-sm">Version <span class="font-semibold text-slate-900">0.1.0-2025-11-14</span></p>
+            <p>VANPORT WYSIWYG is a compact, judgment-free HTML builder with live flex and table tooling, contextual menus, and multi-channel export support (code, JSON, WhatsApp, email).</p>
+            <p class="text-sm text-slate-400">Built for modern responsive authoring directly in the browser.</p>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay preview-overlay" id="preview-dialog" role="dialog" aria-modal="true">
+    <div class="dialog-panel">
+        <div class="flex flex-col gap-4 border-b border-slate-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-xs uppercase text-slate-400">Preview</p>
+                <h3 class="text-xl font-semibold text-slate-900">Responsive snapshot</h3>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button class="px-3 py-2 rounded-full border border-slate-200 text-sm" data-preview-device="desktop">Desktop</button>
+                <button class="px-3 py-2 rounded-full border border-slate-200 text-sm" data-preview-device="tablet">Tablet</button>
+                <button class="px-3 py-2 rounded-full border border-slate-200 text-sm" data-preview-device="mobile">Mobile</button>
+                <button class="px-4 py-2 rounded-full border border-slate-200 text-sm" data-close-dialog>Close</button>
+            </div>
+        </div>
+        <div class="p-6 preview-body">
+            <div id="preview-frame-wrapper" class="preview-frame-wrapper">
+                <iframe id="preview-frame" class="preview-frame" sandbox="allow-same-origin allow-top-navigation-by-user-activation" title="Editor preview"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input id="image-input" type="file" accept="image/*" class="hidden">
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+    const selectors = {
+        editor: document.getElementById('editor'),
+        bubble: document.getElementById('floating-bubble'),
+        tableRows: document.getElementById('table-rows'),
+        tableCols: document.getElementById('table-cols'),
+        flexColumns: document.getElementById('flex-columns'),
+        templateName: document.getElementById('template-name'),
+        templateList: document.getElementById('template-list'),
+        tableInspector: document.getElementById('table-inspector'),
+        flexInspector: document.getElementById('flex-inspector'),
+        selectionLabel: document.querySelector('[data-selection-label]'),
+        toast: document.getElementById('toast'),
+        codeDialog: document.getElementById('code-dialog'),
+        shareDialog: document.getElementById('share-dialog'),
+        aboutDialog: document.getElementById('about-dialog'),
+        previewDialog: document.getElementById('preview-dialog'),
+        codeEditor: document.getElementById('code-editor'),
+        tableWidth: document.querySelector('[data-table-width]'),
+        tableHeight: document.querySelector('[data-table-height]'),
+        tablePadding: document.querySelector('[data-table-padding]'),
+        tableBg: document.querySelector('[data-table-bg]'),
+        flexDirection: document.querySelector('[data-flex-direction]'),
+        flexJustify: document.querySelector('[data-flex-justify]'),
+        flexAlign: document.querySelector('[data-flex-align]'),
+        flexWrap: document.querySelector('[data-flex-wrap]'),
+        flexGap: document.querySelector('[data-flex-gap]'),
+        imageInput: document.getElementById('image-input'),
+        previewFrame: document.getElementById('preview-frame'),
+        previewFrameWrapper: document.getElementById('preview-frame-wrapper'),
+        themeToggle: document.querySelector('[data-action="toggle-theme"]'),
+        themeLabel: document.querySelector('[data-theme-label]')
+    };
+
+    const storedTheme = localStorage.getItem('proton-theme');
+    const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    const state = {
+        savedRange: null,
+        activeElement: null,
+        activeTableCell: null,
+        formatStyles: null,
+        previewSize: 'desktop',
+        previewDevice: 'desktop',
+        theme: storedTheme || (systemPrefersDark ? 'dark' : 'light')
+    };
+
+    const TEMPLATE_STORAGE_KEY = 'proton-canvas-templates';
+
+    function init() {
+        bindToolbar();
+        bindPanels();
+        bindEditorEvents();
+        bindDialogs();
+        bindPreviewControls();
+        hydrateTemplates();
+        updateSelectionLabel(null);
+        syncCodeEditor();
+        setPreview(state.previewSize, true);
+        applyTheme(state.theme, true);
+    }
+
+    function bindToolbar() {
+        document.querySelectorAll('[data-command]').forEach(control => {
+            const command = control.dataset.command;
+            if (control.tagName === 'SELECT' || control.type === 'color') {
+                const eventName = control.tagName === 'SELECT' ? 'change' : 'input';
+                control.addEventListener(eventName, () => execCommand(command, control.value));
+            } else {
+                control.addEventListener('click', () => execCommand(command));
+            }
+        });
+
+        document.querySelectorAll('[data-action]').forEach(control => {
+            control.addEventListener('click', () => handleAction(control.dataset.action));
+        });
+        if (selectors.themeToggle) {
+            selectors.themeToggle.addEventListener('click', toggleTheme);
+            updateThemeToggleLabel();
+        }
+    }
+
+    function bindPanels() {
+        document.querySelectorAll('[data-layout]').forEach(btn => {
+            btn.addEventListener('click', () => insertLayoutPreset(btn.dataset.layout));
+        });
+
+        document.querySelectorAll('[data-preview]').forEach(btn => {
+            btn.addEventListener('click', () => setPreview(btn.dataset.preview));
+        });
+
+        selectors.tableWidth.addEventListener('input', () => resizeCell('width', selectors.tableWidth.value));
+        selectors.tableHeight.addEventListener('input', () => resizeCell('height', selectors.tableHeight.value));
+        selectors.tablePadding.addEventListener('input', () => resizeCell('padding', selectors.tablePadding.value));
+        selectors.tableBg.addEventListener('input', () => updateCellBackground(selectors.tableBg.value));
+
+        selectors.flexDirection.addEventListener('change', () => updateFlexProperty('direction', selectors.flexDirection.value));
+        selectors.flexJustify.addEventListener('change', () => updateFlexProperty('justify', selectors.flexJustify.value));
+        selectors.flexAlign.addEventListener('change', () => updateFlexProperty('align', selectors.flexAlign.value));
+        selectors.flexWrap.addEventListener('change', () => updateFlexProperty('wrap', selectors.flexWrap.value));
+        selectors.flexGap.addEventListener('input', () => updateFlexProperty('gap', selectors.flexGap.value));
+    }
+
+    function bindEditorEvents() {
+        selectors.editor.addEventListener('mouseup', handleSelectionChange);
+        selectors.editor.addEventListener('keyup', handleSelectionChange);
+        selectors.editor.addEventListener('keyup', () => syncCodeEditor());
+        selectors.editor.addEventListener('input', () => {
+            syncCodeEditor();
+            syncPreviewIfOpen();
+        });
+        selectors.editor.addEventListener('click', event => {
+            const target = event.target.closest('td, th, table, [data-flex-layout], .flex-item');
+            setActiveElement(target);
+        });
+
+        selectors.editor.addEventListener('mousemove', event => {
+            const hoverTarget = event.target.closest('table, [data-flex-layout], .flex-item');
+            highlightNode(hoverTarget);
+        });
+
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) return;
+            const anchor = selection.anchorNode;
+            const anchorElement = anchor && anchor.nodeType === Node.TEXT_NODE ? anchor.parentElement : anchor;
+            if (anchorElement && selectors.editor.contains(anchorElement)) {
+                handleSelectionChange();
+            }
+        });
+    }
+
+    function bindDialogs() {
+        document.querySelectorAll('[data-open-dialog]').forEach(btn => {
+            btn.addEventListener('click', () => toggleDialog(btn.dataset.openDialog, true));
+        });
+
+        document.querySelectorAll('[data-close-dialog]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const dialog = btn.closest('.dialog-overlay');
+                dialog && toggleDialog(dialog.id.replace('-dialog', ''), false);
+            });
+        });
+
+        selectors.codeDialog.addEventListener('click', event => {
+            if (event.target === selectors.codeDialog) toggleDialog('code', false);
+        });
+
+        selectors.shareDialog.addEventListener('click', event => {
+            if (event.target === selectors.shareDialog) toggleDialog('share', false);
+        });
+
+        selectors.aboutDialog.addEventListener('click', event => {
+            if (event.target === selectors.aboutDialog) toggleDialog('about', false);
+        });
+
+        selectors.previewDialog.addEventListener('click', event => {
+            if (event.target === selectors.previewDialog) toggleDialog('preview', false);
+        });
+    }
+
+    function bindPreviewControls() {
+        document.querySelectorAll('[data-preview-device]').forEach(button => {
+            button.addEventListener('click', () => updatePreviewFrame(button.dataset.previewDevice));
+        });
+    }
+
+    function handleSelectionChange() {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+            hideBubble();
+            return;
+        }
+        const range = selection.getRangeAt(0);
+        state.savedRange = range;
+        if (selection.isCollapsed) {
+            hideBubble();
+        } else {
+            showBubble(range);
+        }
+
+        const target = selection.anchorNode ? selection.anchorNode.parentElement : null;
+        setActiveElement(target);
+    }
+
+    function showBubble(range) {
+        const rect = range.getBoundingClientRect();
+        if (!rect || !rect.width) {
+            hideBubble();
+            return;
+        }
+        selectors.bubble.style.display = 'flex';
+        const bubbleWidth = selectors.bubble.offsetWidth;
+        const computedTop = Math.max(window.scrollY + 12, rect.top - 45 + window.scrollY);
+        const computedLeft = Math.max(16, rect.left + rect.width / 2 - bubbleWidth / 2 + window.scrollX);
+        selectors.bubble.style.top = `${computedTop}px`;
+        selectors.bubble.style.left = `${computedLeft}px`;
+    }
+
+    function hideBubble() {
+        selectors.bubble.style.display = 'none';
+    }
+
+    function execCommand(command, value = null) {
+        selectors.editor.focus();
+        document.execCommand(command, false, value);
+        syncCodeEditor();
+    }
+
+    function handleAction(action) {
+        switch (action) {
+            case 'insert-table':
+                return insertTable();
+            case 'row-above':
+                return adjustTableRows('before');
+            case 'row-below':
+                return adjustTableRows('after');
+            case 'col-left':
+                return adjustTableColumns('before');
+            case 'col-right':
+                return adjustTableColumns('after');
+            case 'merge-right':
+                return mergeCellRight();
+            case 'split-cell':
+                return splitCell();
+            case 'insert-flex':
+                return insertFlexLayout(parseInt(selectors.flexColumns.value, 10) || 2);
+            case 'create-link':
+                return createLink();
+            case 'clear-format':
+                return execCommand('removeFormat');
+            case 'copy-format':
+                return copyFormat();
+            case 'paste-format':
+                return pasteFormat();
+            case 'insert-image':
+                return selectors.imageInput.click();
+            case 'copy-html':
+                return copyHtmlToClipboard();
+            case 'export-json':
+                return exportJson();
+            case 'save-template':
+                return saveTemplate();
+            case 'load-template':
+                return loadTemplate();
+            case 'share-whatsapp':
+                return shareWhatsApp();
+            case 'share-email':
+                return shareEmail();
+            case 'copy-code':
+                return copyCode();
+            case 'apply-code':
+                return applyCode();
+            case 'toggle-theme':
+                return toggleTheme();
+            default:
+                break;
+        }
+    }
+
+    selectors.imageInput.addEventListener('change', event => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            restoreRange();
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.alt = file.name;
+            img.style.maxWidth = '100%';
+            img.style.borderRadius = '1rem';
+            insertNode(img);
+        };
+        reader.readAsDataURL(file);
+        event.target.value = '';
+    });
+
+    function insertTable() {
+        restoreRange();
+        const rows = clampNumber(selectors.tableRows.value, 1, 12);
+        const cols = clampNumber(selectors.tableCols.value, 1, 12);
+        const table = document.createElement('table');
+        const tbody = document.createElement('tbody');
+        for (let r = 0; r < rows; r += 1) {
+            const row = document.createElement('tr');
+            for (let c = 0; c < cols; c += 1) {
+                const cell = document.createElement('td');
+                cell.textContent = 'Cell';
+                row.appendChild(cell);
+            }
+            tbody.appendChild(row);
+        }
+        table.appendChild(tbody);
+        insertNode(table);
+        notify('Table added');
+    }
+
+    function adjustTableRows(position) {
+        const cell = state.activeTableCell;
+        if (!cell) return notify('Select a table cell', 'error');
+        const row = cell.parentElement;
+        const clone = row.cloneNode(true);
+        clone.querySelectorAll('td, th').forEach(td => td.textContent = '');
+        if (position === 'before') {
+            row.parentElement.insertBefore(clone, row);
+        } else {
+            row.parentElement.insertBefore(clone, row.nextSibling);
+        }
+        notify('Row added');
+    }
+
+    function adjustTableColumns(position) {
+        const cell = state.activeTableCell;
+        if (!cell) return notify('Select a table cell', 'error');
+        const table = cell.closest('table');
+        const columnIndex = Array.from(cell.parentElement.children).indexOf(cell);
+        table.querySelectorAll('tr').forEach(row => {
+            const reference = row.children[columnIndex] || row.lastElementChild;
+            const tagName = reference ? reference.tagName.toLowerCase() : 'td';
+            const newCell = document.createElement(tagName);
+            newCell.textContent = '';
+            if (position === 'before') {
+                row.insertBefore(newCell, row.children[columnIndex]);
+            } else {
+                row.insertBefore(newCell, row.children[columnIndex + 1] || null);
+            }
+        });
+        notify('Column added');
+    }
+
+    function mergeCellRight() {
+        const cell = state.activeTableCell;
+        if (!cell) return notify('Select a table cell', 'error');
+        const nextCell = cell.nextElementSibling;
+        if (!nextCell) return notify('No cell to merge', 'error');
+        cell.colSpan = cell.colSpan + nextCell.colSpan;
+        cell.innerHTML += ' ' + nextCell.innerHTML;
+        nextCell.remove();
+        notify('Merged with next cell');
+    }
+
+    function splitCell() {
+        const cell = state.activeTableCell;
+        if (!cell || cell.colSpan <= 1) return notify('Nothing to split', 'error');
+        const span = cell.colSpan;
+        cell.colSpan = 1;
+        for (let i = 1; i < span; i += 1) {
+            const newCell = document.createElement(cell.tagName.toLowerCase());
+            newCell.textContent = '';
+            cell.parentElement.insertBefore(newCell, cell.nextSibling);
+        }
+        notify('Cell split');
+    }
+
+    function resizeCell(type, value) {
+        const cell = state.activeTableCell;
+        if (!cell) return;
+        if (type === 'width') cell.style.width = value ? `${value}px` : '';
+        if (type === 'height') cell.style.height = value ? `${value}px` : '';
+        if (type === 'padding') cell.style.padding = value ? `${value}px` : '';
+    }
+
+    function updateCellBackground(color) {
+        const cell = state.activeTableCell;
+        if (!cell) return;
+        cell.style.background = color;
+    }
+
+    function insertFlexLayout(columns = 2) {
+        const safeColumns = Math.min(6, Math.max(1, columns));
+        restoreRange();
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex-layout';
+        wrapper.dataset.flexLayout = 'true';
+        wrapper.dataset.direction = 'row';
+        wrapper.dataset.justify = 'space-between';
+        wrapper.dataset.align = 'stretch';
+        wrapper.dataset.wrap = 'wrap';
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'row';
+        wrapper.style.justifyContent = 'space-between';
+        wrapper.style.alignItems = 'stretch';
+        wrapper.style.flexWrap = 'wrap';
+        wrapper.style.gap = '1.5rem';
+        for (let i = 0; i < safeColumns; i += 1) {
+            const item = document.createElement('div');
+            item.className = 'flex-item';
+            item.dataset.flexItem = 'true';
+            item.textContent = 'Flex item';
+            wrapper.appendChild(item);
+        }
+        insertNode(wrapper);
+        notify('Flex layout added');
+    }
+
+    function insertLayoutPreset(type) {
+        switch (type) {
+            case 'single':
+                insertSingleColumn();
+                break;
+            case 'two':
+                insertFlexLayout(2);
+                break;
+            case 'three':
+                insertFlexLayout(3);
+                break;
+            case 'hero':
+                insertHero();
+                break;
+            default:
+                break;
+        }
+    }
+
+    function insertSingleColumn() {
+        restoreRange();
+        const section = document.createElement('section');
+        section.innerHTML = '<h2>Section Title</h2><p>Write something compelling here.</p>';
+        insertNode(section);
+    }
+
+    function insertHero() {
+        restoreRange();
+        const hero = document.createElement('section');
+        hero.className = 'flex-layout';
+        hero.dataset.flexLayout = 'true';
+        hero.dataset.direction = 'row';
+        hero.dataset.justify = 'space-between';
+        hero.dataset.align = 'center';
+        hero.dataset.wrap = 'wrap';
+        hero.style.display = 'flex';
+        hero.style.flexDirection = 'row';
+        hero.style.justifyContent = 'space-between';
+        hero.style.alignItems = 'center';
+        hero.style.flexWrap = 'wrap';
+        hero.style.gap = '1.5rem';
+        hero.innerHTML = '<div class="flex-item"><p class="text-sm uppercase text-slate-500">Announcement</p><h2>Hero headline</h2><p>Create landing experiences with live editing.</p><button style="margin-top:1rem" class="toolbar-button bg-blue-600 text-white">Get started</button></div><div class="flex-item"><p>Drop media or illustrations here.</p></div>';
+        insertNode(hero);
+    }
+
+    function setPreview(mode, silent = false) {
+        state.previewSize = mode;
+        selectors.editor.style.maxWidth = mode === 'desktop' ? '100%' : mode === 'tablet' ? '720px' : '420px';
+        selectors.editor.style.margin = '0 auto';
+        document.querySelectorAll('[data-preview]').forEach(btn => {
+            btn.dataset.active = btn.dataset.preview === mode ? 'true' : 'false';
+        });
+        if (!silent) {
+            notify(`Preview: ${mode}`);
+        }
+    }
+
+    function updatePreviewFrame(device = state.previewDevice) {
+        if (!selectors.previewFrame || !selectors.previewFrameWrapper || !selectors.previewDialog) return;
+        const targetDevice = device || 'desktop';
+        state.previewDevice = targetDevice;
+        const widthMap = {
+            desktop: 1100,
+            tablet: 820,
+            mobile: 420
+        };
+        const availableWidth = Math.max(320, window.innerWidth - 160);
+        const targetWidth = Math.min(availableWidth, widthMap[targetDevice] || availableWidth);
+        selectors.previewFrameWrapper.style.width = `${targetWidth}px`;
+        selectors.previewFrameWrapper.style.maxWidth = '100%';
+        selectors.previewFrameWrapper.style.margin = '0 auto';
+        const baseStyles = `
+            :root { color-scheme: light dark; }
+            body { font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 2rem; background: #f8fafc; color: #0f172a; line-height: 1.6; }
+            h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.01em; }
+            table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+            table td, table th { border: 1px solid #cbd5f5; padding: 0.75rem; }
+            img { max-width: 100%; height: auto; border-radius: 0.75rem; }
+            @media (prefers-color-scheme: dark) {
+                body:not([data-theme="light"]) { background: #020617; color: #e2e8f0; }
+                body:not([data-theme="light"]) table td, body:not([data-theme="light"]) table th { border-color: rgba(148, 163, 184, 0.6); }
+            }
+            body[data-theme="dark"] { background: #020617; color: #e2e8f0; }
+            body[data-theme="dark"] table td, body[data-theme="dark"] table th { border-color: rgba(148, 163, 184, 0.6); }
+        `;
+        const previewThemeAttr = `data-theme="${state.theme}"`;
+        selectors.previewFrame.srcdoc = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>${baseStyles}</style></head><body ${previewThemeAttr}>${selectors.editor.innerHTML}</body></html>`;
+        document.querySelectorAll('[data-preview-device]').forEach(btn => {
+            btn.dataset.active = btn.dataset.previewDevice === targetDevice ? 'true' : 'false';
+        });
+    }
+
+    function syncPreviewIfOpen() {
+        if (selectors.previewDialog && selectors.previewDialog.dataset.open === 'true') {
+            updatePreviewFrame(state.previewDevice);
+        }
+    }
+
+    function toggleTheme() {
+        const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme);
+    }
+
+    function applyTheme(theme, initial = false) {
+        state.theme = theme;
+        document.documentElement.dataset.theme = theme;
+        document.body.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme === 'dark' ? 'dark' : 'light';
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        updateThemeToggleLabel();
+        if (!initial) {
+            localStorage.setItem('proton-theme', theme);
+        }
+    }
+
+    function updateThemeToggleLabel() {
+        if (!selectors.themeLabel) return;
+        selectors.themeLabel.textContent = state.theme === 'dark' ? 'Dark' : 'Light';
+    }
+
+    function createLink() {
+        const url = prompt('Enter URL');
+        if (!url) return;
+        execCommand('createLink', url);
+    }
+
+    function copyFormat() {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        const node = selection.anchorNode.parentElement;
+        state.formatStyles = {
+            value: node.getAttribute('style') || '',
+            hasStyle: node.hasAttribute('style')
+        };
+        notify('Format copied');
+    }
+
+    function pasteFormat() {
+        if (!state.formatStyles) return notify('Copy format first', 'error');
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        const node = selection.anchorNode.parentElement;
+        if (state.formatStyles.hasStyle && state.formatStyles.value) {
+            node.setAttribute('style', state.formatStyles.value);
+        } else {
+            node.removeAttribute('style');
+        }
+        notify('Format applied');
+    }
+
+    function copyHtmlToClipboard() {
+        navigator.clipboard.writeText(selectors.editor.innerHTML)
+            .then(() => notify('HTML copied to clipboard'))
+            .catch(() => notify('Clipboard unavailable', 'error'));
+    }
+
+    function exportJson() {
+        const payload = {
+            html: selectors.editor.innerHTML,
+            plainText: selectors.editor.innerText,
+            timestamp: new Date().toISOString(),
+            preview: state.previewSize
+        };
+        navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+            .then(() => notify('JSON copied to clipboard'))
+            .catch(() => notify('Clipboard unavailable', 'error'));
+    }
+
+    function saveTemplate() {
+        const name = selectors.templateName.value.trim();
+        if (!name) return notify('Name the template', 'error');
+        const templates = getTemplates();
+        templates[name] = selectors.editor.innerHTML;
+        localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+        hydrateTemplates();
+        notify('Template saved');
+    }
+
+    function loadTemplate() {
+        const key = selectors.templateList.value;
+        if (!key) return notify('Select a template', 'error');
+        const templates = getTemplates();
+        selectors.editor.innerHTML = templates[key];
+        syncCodeEditor();
+        notify(`Loaded ${key}`);
+    }
+
+    function hydrateTemplates() {
+        const templates = getTemplates();
+        selectors.templateList.innerHTML = '<option value="">Select template</option>';
+        Object.keys(templates).forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            selectors.templateList.appendChild(option);
+        });
+    }
+
+    function getTemplates() {
+        try {
+            return JSON.parse(localStorage.getItem(TEMPLATE_STORAGE_KEY)) || {};
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function shareWhatsApp() {
+        toggleDialog('share', false);
+        const text = encodeURIComponent(selectors.editor.innerText);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    function shareEmail() {
+        toggleDialog('share', false);
+        const subject = encodeURIComponent('Shared from Proton Canvas');
+        const body = encodeURIComponent(selectors.editor.innerHTML);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    }
+
+    function copyCode() {
+        navigator.clipboard.writeText(selectors.codeEditor.value)
+            .then(() => notify('Code copied'))
+            .catch(() => notify('Clipboard unavailable', 'error'));
+    }
+
+    function applyCode() {
+        selectors.editor.innerHTML = selectors.codeEditor.value;
+        toggleDialog('code', false);
+        syncCodeEditor();
+        notify('Code applied');
+    }
+
+    function syncCodeEditor() {
+        selectors.codeEditor.value = selectors.editor.innerHTML;
+    }
+
+    function toggleDialog(type, open) {
+        const dialogs = {
+            code: selectors.codeDialog,
+            share: selectors.shareDialog,
+            preview: selectors.previewDialog,
+            about: selectors.aboutDialog
+        };
+        const dialog = dialogs[type];
+        if (!dialog) return;
+        dialog.dataset.open = open ? 'true' : 'false';
+        if (open) {
+            if (type === 'code') {
+                syncCodeEditor();
+            }
+            if (type === 'preview') {
+                updatePreviewFrame(state.previewDevice);
+            }
+        }
+    }
+
+    function updateFlexProperty(property, value) {
+        const flexNode = state.activeElement && state.activeElement.closest('[data-flex-layout]');
+        if (!flexNode) return;
+        if (property === 'direction') {
+            flexNode.style.flexDirection = value;
+            flexNode.dataset.direction = value;
+        }
+        if (property === 'justify') {
+            flexNode.style.justifyContent = value;
+            flexNode.dataset.justify = value;
+        }
+        if (property === 'align') {
+            flexNode.style.alignItems = value;
+            flexNode.dataset.align = value;
+        }
+        if (property === 'wrap') {
+            flexNode.style.flexWrap = value;
+            flexNode.dataset.wrap = value;
+        }
+        if (property === 'gap') {
+            const numericGap = value === '' ? 24 : Number(value);
+            flexNode.style.gap = `${numericGap}px`;
+            flexNode.dataset.gap = numericGap;
+        }
+    }
+
+    function setActiveElement(target) {
+        state.activeElement = target;
+        if (target && target.matches('td, th')) {
+            state.activeTableCell = target;
+            selectors.tableInspector.classList.remove('hidden');
+            selectors.tableWidth.value = parseInt(target.style.width, 10) || '';
+            selectors.tableHeight.value = parseInt(target.style.height, 10) || '';
+            selectors.tablePadding.value = parseInt(target.style.padding, 10) || '';
+            selectors.tableBg.value = rgbToHex(getComputedStyle(target).backgroundColor);
+        } else {
+            selectors.tableInspector.classList.add('hidden');
+            state.activeTableCell = null;
+        }
+
+        const flexNode = target && target.closest('[data-flex-layout]');
+        if (flexNode) {
+            selectors.flexInspector.classList.remove('hidden');
+            selectors.flexDirection.value = flexNode.style.flexDirection || 'row';
+            selectors.flexJustify.value = flexNode.style.justifyContent || 'space-between';
+            selectors.flexAlign.value = flexNode.style.alignItems || 'stretch';
+            selectors.flexWrap.value = flexNode.style.flexWrap || 'wrap';
+            selectors.flexGap.value = parseInt(flexNode.style.gap, 10) || 24;
+        } else {
+            selectors.flexInspector.classList.add('hidden');
+        }
+
+        updateSelectionLabel(target);
+        highlightNode(target);
+    }
+
+    function updateSelectionLabel(target) {
+        selectors.selectionLabel.textContent = target ? target.tagName.toLowerCase() : 'None';
+    }
+
+    function highlightNode(target) {
+        document.querySelectorAll('.editor-highlight').forEach(node => node.classList.remove('editor-highlight'));
+        if (target) target.classList.add('editor-highlight');
+    }
+
+    function restoreRange() {
+        if (!state.savedRange) return;
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(state.savedRange);
+    }
+
+    function insertNode(node) {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+            selectors.editor.appendChild(node);
+            return;
+        }
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(node);
+        range.setStartAfter(node);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        state.savedRange = range;
+    }
+
+    function notify(message, intent = 'info') {
+        selectors.toast.textContent = message;
+        selectors.toast.dataset.intent = intent;
+        selectors.toast.dataset.visible = 'true';
+        setTimeout(() => {
+            selectors.toast.dataset.visible = 'false';
+        }, 2200);
+    }
+
+    function clampNumber(value, min, max) {
+        const numeric = Number(value);
+        if (Number.isNaN(numeric)) return min;
+        return Math.min(max, Math.max(min, numeric));
+    }
+
+    function rgbToHex(rgb) {
+        if (!rgb) return '#ffffff';
+        const result = rgb.match(/\d+(\.\d+)?/g);
+        if (!result) return '#ffffff';
+        if (rgb.includes('rgba') && parseFloat(result[3]) === 0) {
+            return '#ffffff';
+        }
+        const values = result.slice(0, 3).map(value => Math.round(parseFloat(value))).map(value => value.toString(16).padStart(2, '0'));
+        return `#${values.join('')}`;
+    }
+
+    init();
+})();
+</script>
+</body>
+</html>
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1.5rem;
+            background: rgba(242, 244, 247, 0.95);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            gap: 1rem;
+        }
+
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .menu-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.02em;
+            border: none;
+            background: transparent;
+            color: #0f172a;
+            padding: 0.25rem 0.65rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .menu-button:hover,
+        .menu-button:focus-visible {
+            background: rgba(15, 23, 42, 0.08);
+        }
+
+        .menu-button[data-state="active"] {
+            color: #2563eb;
+        }
+
+        .app-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 0.6rem;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a, #2563eb);
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .format-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid rgba(15, 23, 42, 0.08);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            padding: 0.65rem 1.25rem;
+            overflow: auto;
+        }
+
+        .workspace {
+            flex: 1 1 auto;
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr) 320px;
+            gap: 1rem;
+            padding: 1rem 1.5rem 1.5rem;
+            min-height: 0;
+            box-sizing: border-box;
+        }
+
+        .workspace > aside,
+        .workspace > section {
+            min-height: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .editor-stage {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-surface {
+            flex: 1;
+            overflow: auto;
+        }
