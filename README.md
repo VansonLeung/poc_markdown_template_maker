@@ -40,4 +40,4 @@ README.md           # You are here
 - Support custom placeholder tags plus validation before export.
 - Harden copy/paste formatting and add undo/redo history visualization.
 
-Feel free to open issues or PRs as you expand Proton Canvas!
+Feel free to open issues or PRs as you expand VANPORT WYSIWYG!
