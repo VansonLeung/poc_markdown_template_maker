@@ -1,5 +1,7 @@
 # VANPORT WYSIWYG — AI-Assisted HTML WYSIWYG Studio
 
+## (TODO: AI assistance features coming soon)
+
 VANPORT WYSIWYG is a single-page, desktop-first playground powered by vanilla JavaScript and TailwindCSS (via CDN). It blends rich authoring tools with AI-friendly workflows so you can craft, reuse, and share polished HTML templates without leaving the browser.
 
 ## Key Features
